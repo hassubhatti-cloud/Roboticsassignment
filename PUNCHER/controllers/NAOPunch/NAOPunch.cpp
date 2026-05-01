@@ -16,8 +16,8 @@ struct BoxCandidate {
     int x, y;               // Center position
     int width, height;      // Size in pixels
     int area;               // Total area
-    float aspectRatio;      // Width/height ratio - helps identify boxes vs random shapes
-    int matchPixels;        // How many pixels matched our target color
+    float aspectRatio;      // Width/height ratio -  identify boxes vs random shapes
+    int matchPixels;        // How many pixels matched  target color
     float matchRatio;       // Percentage of the blob that is the right color
 };
 
@@ -26,17 +26,17 @@ private:
     Robot *robot;
     int timeStep;
     
-    // Camera stuff - using both top and bottom for better view
+    // Camera  - using both top and bottom for better view
     Camera *topCamera;
     Camera *bottomCamera;
     
-    // Sonar sensors for distance measurement - helps us know when to stop
+    // Sonar sensors  for distance measurement - helps us know when to stop
     DistanceSensor *sonarRight;
     DistanceSensor *sonarLeft;
     
     // Right arm motors - this is what does the punching
-    Motor *rShoulderPitch;   // Moves arm forward/back
-    Motor *rShoulderRoll;    // Raises arm sideways
+    Motor *rShoulderPitch;   // Moves  arm forward/back
+    Motor *rShoulderRoll;    // Raises arm  sideways
     Motor *rElbowRoll;       // Bends the elbow
     
     // Left arm motors - mostly just stays down during this task
@@ -44,7 +44,7 @@ private:
     Motor *lShoulderRoll;
     Motor *lElbowRoll;
     
-    // Walking motion - using Webots' pre-made motion so the robot doesn't fall over
+    // Walking motion - using  pre-made motion so the robot doesn't fall over
     Motion *walkForwards;
     
     // The robot's brain - switches between looking, walking, and punching
@@ -52,11 +52,11 @@ private:
     RobotState currentState;
     
     // Tracking detection and movement
-    double detectionStartTime;   // When we first saw the box
-    int walkSteps;               // Counts how many steps taken (safety limit)
-    int frameCounter;            // For controlling how often we print debug info
+    double detectionStartTime;   // When we  first saw the box
+    int walkSteps;               // Counts  how many steps taken 
+    int frameCounter;            // For  controlling how often we print debug info
     
-    // Detection settings - tuned through trial and error
+    // Detection settings - tuned  through trial and error
     const int MIN_BOX_SIZE = 20;          // Smaller than this is probably noise
     const int MAX_BOX_SIZE = 500;         // Bigger than this means w too close
 
@@ -64,7 +64,7 @@ private:
     const float MAX_ASPECT_RATIO = 3.5;   
     const float MIN_MATCH_RATIO = 0.1;    // Only needs 10% color match - pretty forgiving
     
-    // Color range for our specific box - got these values from the debug output
+    // Color range for our specific box - got these values from the debug  output
     // The box was showing RGB values around (182,133,83) during testing
     int boxRMin = 160, boxRMax = 210;
     int boxGMin = 120, boxGMax = 160;
@@ -88,7 +88,7 @@ public:
             std::cout << "✓ Bottom camera enabled" << std::endl;
         }
         
-        // Set up sonar sensors so we can detect how far the box is
+        // Set up sonar sensors so we  can detect how far the box is
         sonarRight = robot->getDistanceSensor("Sonar/Right");
         sonarLeft = robot->getDistanceSensor("Sonar/Left");
         
@@ -103,14 +103,14 @@ public:
         lShoulderRoll = robot->getMotor("LShoulderRoll");
         lElbowRoll = robot->getMotor("LElbowRoll");
         
-        // Load the walking animation - thank goodness this exists, manual walking was a disaster
+        // Load the walking animation
         walkForwards = new Motion("../../motions/Forwards.motion");
         std::cout << "✓ Motion files loaded" << std::endl;
         
         // Start with arms down and relaxed
         setupInitialArmPositions();
         
-        // Begin in search mode
+        // Begin  in search mode
         currentState = SEARCHING;
         detectionStartTime = 0;
         walkSteps = 0;
@@ -123,7 +123,7 @@ public:
         std::cout << "   This should match your box which was around RGB(182,133,83)\n" << std::endl;
     }
     
-    // Puts both arms down at the sides - the starting position
+    // Puts both arms down at the sides 
     void setupInitialArmPositions() {
         rShoulderPitch->setVelocity(0.8);
         rShoulderRoll->setVelocity(0.5);
@@ -145,7 +145,7 @@ public:
         }
     }
     
-    // Checks if a pixel is the color of our box
+    // Checks  if a pixel is the color of our box
     bool isMatchColor(int r, int g, int b) {
         return (r > boxRMin && r < boxRMax &&
                 g > boxGMin && g < boxGMax &&
@@ -153,13 +153,12 @@ public:
     }
 
     
-    // This finds connected groups of colored pixels (blobs)
     // Uses a flood fill algorithm to grow regions from seed pixels
     std::vector<BoxCandidate> findBlobs(const unsigned char* image, int width, int height) {
         std::vector<BoxCandidate> blobs;
         std::vector<std::vector<bool>> visited(height, std::vector<bool>(width, false));
         
-        // Scan every few pixels for performance reasons
+        // Scan every few  pixels for performance reasons
         for (int y = 0; y < height; y += 2) {
             for (int x = 0; x < width; x += 2) {
                 int r = Camera::imageGetRed(image, width, x, y);
@@ -167,7 +166,7 @@ public:
                 int b = Camera::imageGetBlue(image, width, x, y);
                 
                 if (isMatchColor(r, g, b) && !visited[y][x]) {
-                    // Found a seed pixel - now expand it to find the whole blob
+                    // Found a seed pixel - now  expand it to find the whole blob
                     int minX = x, maxX = x, minY = y, maxY = y;
                     int matchCount = 0;
                     int totalPixels = 0;
@@ -176,7 +175,7 @@ public:
                     queue.push_back({x, y});
                     visited[y][x] = true;
                     
-                    // Breadth-first search to find connected pixels
+                    // Breadth-first search to find  connected pixels
                     while (!queue.empty()) {
                         auto [cx, cy] = queue.back();
                         queue.pop_back();
@@ -187,7 +186,7 @@ public:
                         minY = std::min(minY, cy);
                         maxY = std::max(maxY, cy);
                         
-                        // Check neighboring pixels (4 directions)
+                        // Check neighboing pixels
                         for (int dy = -2; dy <= 2; dy += 2) {
                             for (int dx = -2; dx <= 2; dx += 2) {
                                 int nx = cx + dx;
@@ -205,7 +204,7 @@ public:
                         }
                     }
                     
-                    // Now that we have the bounding box, count how many pixels actually match
+                    // Now that   we have the bounding box, count how many pixels actually match
                     for (int by = minY; by <= maxY && by < height; by++) {
                         for (int bx = minX; bx <= maxX && bx < width; bx++) {
                             int br = Camera::imageGetRed(image, width, bx, by);
@@ -219,7 +218,7 @@ public:
                     int boxWidth = maxX - minX;
                     int boxHeight = maxY - minY;
                     
-                    // Filter by size and shape - we want something box-like
+                    // Filter by  size and shape - we want something box-like
                     if (boxWidth > MIN_BOX_SIZE && boxHeight > MIN_BOX_SIZE &&
                         boxWidth < MAX_BOX_SIZE && boxHeight < MAX_BOX_SIZE) {
                         
@@ -230,17 +229,17 @@ public:
                             matchRatio >= MIN_MATCH_RATIO) {
                             
                             BoxCandidate candidate;
-                            candidate.x = (minX + maxX) / 2;
+                             candidate.x = (minX + maxX) / 2;
                             candidate.y = (minY + maxY) / 2;
                             candidate.width = boxWidth;
                             candidate.height = boxHeight;
                             candidate.area = boxWidth * boxHeight;
-                            candidate.aspectRatio = aspectRatio;
+                        candidate.aspectRatio = aspectRatio;
                             candidate.matchPixels = matchCount;
                             candidate.matchRatio = matchRatio;
                             blobs.push_back(candidate);
                             
-                            // Let the user know something was found
+                            // Let the user  know something was found
                             std::cout << "   📦 Found a candidate: " << boxWidth << "x" << boxHeight 
                                       << " (" << (int)(matchRatio*100) << "% match)" << std::endl;
                         }
@@ -267,7 +266,7 @@ public:
         }
 
         
-        // Also check bottom camera - helpful when we get closer
+        // Also check bottom camera
         if (bottomCamera) {
             const unsigned char *bottomImage = bottomCamera->getImage();
             if (bottomImage) {
@@ -278,7 +277,7 @@ public:
             }
         }
         
-        // Pick the biggest candidate - probably the box we want
+        // Pick the biggest candidat
         std::sort(allCandidates.begin(), allCandidates.end(),
                   [](const BoxCandidate& a, const BoxCandidate& b) {
                       return a.area > b.area;
@@ -293,7 +292,7 @@ public:
         
         return false;
     }
-    
+     
     // Reads the sonar sensors to see how far away the box is
     double getDistance() {
         if (sonarRight) {
@@ -307,14 +306,14 @@ public:
         return 5.0;  // Default far distance if sensors are weird
     }
     
-    // Moves the robot forward using the pre-recorded walking motion
+    // Moves the  robot forward using the pre-recorded walking motion
     void walkForward() {
         if (!walkForwards) return;
         
         walkForwards->play();
         double startTime = robot->getTime();
         
-        // Walk for about 0.8 seconds, looping the motion if needed
+        // Walk for  about 0.8 seconds, looping the motion if needed
         while (robot->getTime() < startTime + 0.8) {
             robot->step(timeStep);
             if (walkForwards->isOver()) {
@@ -330,7 +329,7 @@ public:
         }
     }
     
-    // Stops the walking motion
+    // Stops the  walking motion
     void stopWalking() {
         if (walkForwards) {
             walkForwards->stop();
@@ -341,21 +340,21 @@ public:
     // Decides if we're close enough to punch
     bool isVeryNear() {
         double dist = getDistance();
-        return (dist > 0 && dist < 0.32);  // About 32 centimeters - arm's reach
+        return (dist > 0 && dist < 0.32);  
     }
     
-    // The main event - four phases of arm movement ending with a punch
+    // The main event  - four phases of arm movement ending with a punch
     void performArmSequence() {
         std::cout << "\n╔════════════════════════════════════════════════════════════════╗" << std::endl;
         std::cout << "║              🎯 TARGET REACHED! Time to punch!                  ║" << std::endl;
         std::cout << "╚════════════════════════════════════════════════════════════════╝" << std::endl;
         
-        // Set comfortable speeds for the arm movements
+        // Set comortable  speeds for the arm movements
         rShoulderPitch->setVelocity(0.8);
         rShoulderRoll->setVelocity(0.5);
         rElbowRoll->setVelocity(0.5);
         
-        // Step 1: Raise the arm out to the side like a chicken wing
+        // Step 1: Raise  the arm out to the side like a chicken wing
         std::cout << "  [1/4] Raising arm sideways..." << std::endl;
         rShoulderRoll->setPosition(-1.2);
         rShoulderPitch->setPosition(1.5);
@@ -364,19 +363,19 @@ public:
         double startTime = robot->getTime();
         while (robot->getTime() < startTime + 2.0) robot->step(timeStep);
         
-        // Step 2: Bend the elbow - getting ready to punch
+        // Step 2: Bend the elbow -  getting ready to punch
         std::cout << "  [2/4] Chambering the punch..." << std::endl;
         rElbowRoll->setPosition(1.2);
         startTime = robot->getTime();
         while (robot->getTime() < startTime + 1.5) robot->step(timeStep);
         
-        // Step 3: Rotate the shoulder so the fist points forward
+        // Step 3: Rotate the shoulder  so the fist points forward
         std::cout << "  [3/4] Aiming forward..." << std::endl;
         rShoulderPitch->setPosition(-0.1);
         startTime = robot->getTime();
         while (robot->getTime() < startTime + 1.5) robot->step(timeStep);
         
-        // Step 4: The punch! Crank up the speed for maximum impact
+        // Step 4: The punch
         std::cout << "  [4/4] THROWING THE PUNCH! 👊" << std::endl;
         rShoulderPitch->setVelocity(90000);  // Go as fast as possible
         rShoulderRoll->setVelocity(90000);
@@ -390,7 +389,7 @@ public:
         double impactTime = robot->getTime();
         while (robot->getTime() < impactTime + 0.5) robot->step(timeStep);
         
-        std::cout << "\n  💥 PUNCH LANDED! 💥" << std::endl;
+        std::cout << "\n  💥 PUNCH LANDED! 👊 " << std::endl;
         
         // Reset to normal speeds for next time
         rShoulderPitch->setVelocity(0.8);
@@ -422,7 +421,6 @@ public:
                         
                         double elapsed = robot->getTime() - detectionStartTime;
                         
-                        // Show a progress bar so we know what's happening
                         if (frameCounter % 20 == 0) {
                             int progress = (int)((elapsed / 2.0) * 20);
                             std::cout << "\r⏱️  Confirming: [";
@@ -432,7 +430,7 @@ public:
                             std::cout << "] " << (int)(elapsed * 50) << "%   " << std::flush;
                         }
                         
-                        if (elapsed >= 2.0) {
+                        if (elapsed  >= 2.0) {
                             std::cout << "\n✅ Box confirmed! Walking towards it now..." << std::endl;
                             currentState = WALKING_TOWARDS;
                             detectionStartTime = 0;
@@ -461,7 +459,7 @@ public:
                     } else {
                         walkForward();
                         
-                        // Safety - don't walk forever if something goes wrong
+                        // Safety - don't walk forever
                         if (walkSteps > 50) {
                             std::cout << "\n⚠️ Took too many steps, stopping anyway." << std::endl;
                             stopWalking();
@@ -476,14 +474,14 @@ public:
                     std::cout << "\n╔════════════════════════════════════════════════════════════════╗" << std::endl;
                     std::cout << "║                    🎉 MISSION COMPLETE! 🎉                       ║" << std::endl;
                     std::cout << "╚════════════════════════════════════════════════════════════════╝" << std::endl;
-                    return;
+                 return;
             }
         }
     }
     
     ~NAOController() {
         delete walkForwards;
-        delete robot;
+     delete robot;
     }
 };
 
